@@ -1,5 +1,6 @@
-from dataclasses import dataclass, asdict
-from typing import Optional, List
+from dataclasses import asdict, dataclass
+from typing import List, Optional
+
 
 @dataclass
 class Job:
@@ -23,17 +24,19 @@ class Job:
         # Your existing logic with a small tweak for cleaner formatting
         salary_range = ""
         if self.min_salary or self.max_salary:
-            salary_range = f"Salary: ${self.min_salary or 0:,} - ${self.max_salary or 0:,}\n"
-        
+            salary_range = (
+                f"Salary: ${self.min_salary or 0:,} - ${self.max_salary or 0:,}\n"
+            )
+
         experience_range = f"{self.min_experience}+ years"
         if self.max_experience:
             experience_range = f"{self.min_experience}-{self.max_experience} years"
-        
+
         return (
             f"Job Title: {self.title}\n"
             f"Company: {self.company}\n"
             f"Location: {self.location}\n"
-            f"Description: {self.description[:100]}...\n" # Truncated for readability
+            f"Description: {self.description[:100]}...\n"  # Truncated for readability
             f"Required Skills: {', '.join(self.required_skills)}\n"
             f"Preferred Skills: {', '.join(self.preferred_skills)}\n"
             f"Experience: {experience_range}\n"

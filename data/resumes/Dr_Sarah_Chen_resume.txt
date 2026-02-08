@@ -1,0 +1,33 @@
+Dr. Sarah Chen
+Email: sarah.chen@email.com
+Phone: 555-222-3333
+
+SUMMARY
+Systems Architect with 16+ years of experience in distributed systems, infrastructure, and high-level programming.
+
+SKILLS
+- Python
+- Java
+- C++
+- Go
+- Docker
+- Kubernetes
+- Terraform
+- FastAPI
+- SQL
+- NoSQL
+- AWS
+- GCP
+
+EXPERIENCE
+Principal Architect at Global Systems (2015-Present)
+- Led global infrastructure migrations to Kubernetes and AWS
+- Designed core distributed system protocols for high-availability apps
+
+Director of Engineering at CoreLogic (2008-2015)
+- Oversaw development of enterprise-level database systems
+- Mentored over 50 engineers in system design and optimization
+
+EDUCATION
+PhD in Software Engineering
+Carnegie Mellon University, 2008

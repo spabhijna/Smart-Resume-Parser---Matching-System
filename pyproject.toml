@@ -19,9 +19,25 @@ include = ["src*"]
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.5.1",
     "pytest>=9.0.2",
+    "ruff>=0.15.0",
 ]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+
+[tool.ruff]
+# Target Python version (you're using 3.11 for Resume-Parser)
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+# Enable specific rules (E = Error, F = Pyflakes, I = Import Sorting)
+select = ["E", "F", "I"]
+fixable = ["ALL"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

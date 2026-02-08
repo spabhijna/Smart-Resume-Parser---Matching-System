@@ -1,0 +1,30 @@
+Alex Rivera
+Email: alex.rivera@email.com
+Phone: 555-987-6543
+
+SUMMARY
+Backend Developer with 7 years of experience specialized in building scalable APIs and cloud infrastructure.
+
+SKILLS
+- Python
+- SQL
+- Docker
+- FastAPI
+- AWS
+- Redis
+- PostgreSQL
+- Microservices
+- Git
+
+EXPERIENCE
+Lead Backend Engineer at CloudScale (2021-Present)
+- Architected high-performance APIs using FastAPI and Redis
+- Managed containerized deployments on AWS using Docker
+
+Senior Developer at WebFlow Solutions (2017-2021)
+- Developed complex database schemas using SQL and PostgreSQL
+- Integrated third-party cloud services for data processing
+
+EDUCATION
+Bachelor of Science in Computer Science
+University of Texas, 2017

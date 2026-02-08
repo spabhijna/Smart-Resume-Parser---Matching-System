@@ -1,80 +1,123 @@
-from src.utils.matcher_utils import normalize_list, match_level
-from typing import List
-from src.models.job import Job
+import math
+from typing import Dict, List, Set, Tuple
+
 from src.models.candidate import Candidate
+from src.models.job import Job
+from src.models.match_config import MatchConfig
+from src.utils.matcher_utils import SKILL_GROUPS, match_level, normalize_list
 
-# returns in the range of (0-1)
-def required_skills_score(candidate_skills: List[str], required_skills) -> float:
-    req_set = set(required_skills)
-    cand_set = set(candidate_skills)
 
-    if not req_set:
-        return 1
-    
-    matched_count = len(req_set.intersection(cand_set))
-    missing_count = len(req_set) - matched_count
+class RuleBasedCandidateMatcher:
+    """
+    Fully rule-based candidate matcher.
 
-    ratio = matched_count/ len(req_set)
+    Characteristics:
+    - Deterministic
+    - Explainable
+    - Configurable
+    - No ML assumptions
+    """
 
-    decay_factor = 0.5
-    penalty = decay_factor ** missing_count
+    def __init__(self, config: MatchConfig | None = None):
+        self.config = config or MatchConfig()
 
-    return round(ratio * penalty, 3)
+    def _required_skill_score(
+        self, candidate: Set[str], required: Set[str], candidate_exp: int
+    ) -> float:
+        if not required:
+            return 1.0
 
-def preferred_skill_score(candidate_skills: List[str], preferred_skills) -> float:
-    if not preferred_skills:
+        # Apply skill groups ONLY for seniors
+        if candidate_exp >= 10:
+            candidate = self._expand_with_skill_groups(candidate)
+
+        matched = len(candidate & required)
+        missing = len(required) - matched
+
+        ratio = matched / len(required)
+
+        # Seniors get one missing skill forgiven
+        if candidate_exp >= 10:
+            missing = max(0, missing - 1)
+
+        penalty = self.config.required_decay**missing
+        score = ratio * penalty
+
+        return max(self.config.min_required_floor, score)
+
+    def _preferred_skill_score(self, candidate: Set[str], preferred: Set[str]) -> float:
+        if not preferred:
+            return 0.0
+
+        return len(candidate & preferred) / len(preferred)
+
+    def _experience_score(self, candidate_exp: int, job: Job) -> float:
+        min_exp = job.min_experience or 0
+        max_exp = job.max_experience
+
+        if candidate_exp < min_exp:
+            gap = min_exp - candidate_exp
+            return max(0.0, 1.0 - self.config.under_exp_penalty * gap)
+
+        if max_exp and candidate_exp > max_exp:
+            over = candidate_exp - max_exp
+            decay = math.exp(-self.config.over_exp_decay * over)
+            return max(self.config.over_exp_floor, decay)
+
         return 1.0
-    matched = candidate_skills.intersection(preferred_skills)
 
-    return len(matched) / len(preferred_skills)
+    def _education_score(
+        self, education: List[dict], keywords: List[str] | None
+    ) -> float:
+        if not keywords:
+            return 0.0
 
-def experience_score(candidate_exp: int, job: Job) -> float:
-    if candidate_exp < job.min_experience:
-        if candidate_exp >= job.min_experience - 1:
-            return 0.5  
-        return 0.0
+        text = " ".join(e.get("raw", "").lower() for e in education)
 
-    if not job.max_experience or (job.min_experience <= candidate_exp <= job.max_experience):
-        return 1.0
+        matches = sum(1 for k in keywords if f" {k.lower()} " in f" {text} ")
 
-    if candidate_exp > job.max_experience:
-        years_over = candidate_exp - job.max_experience
-        penalty = years_over * 0.05
-        return max(0.7, 1.0 - penalty)
+        return matches / len(keywords)
 
-    return 1.0
+    def score(self, candidate: Candidate, job: Job) -> Tuple[float, Dict[str, float]]:
+        cand_skills = set(normalize_list(candidate.skills))
+        req_skills = set(normalize_list(job.required_skills))
+        pref_skills = set(normalize_list(job.preferred_skills))
 
-def education_score(candidate_edu: list[dict], keywords: list[str] | None) -> float:
-    if not keywords:
-        return 1.0
+        breakdown = {
+            "required": self._required_skill_score(
+                cand_skills, req_skills, candidate.experience
+            ),
+            "preferred": self._preferred_skill_score(cand_skills, pref_skills),
+            "experience": self._experience_score(candidate.experience, job),
+            "education": self._education_score(
+                candidate.education, job.education_keywords
+            ),
+        }
 
-    text = " ".join(
-        e.get("raw", "").lower() for e in candidate_edu
-    )
+        cfg = self.config
+        final_score = (
+            cfg.required_weight * breakdown["required"]
+            + cfg.preferred_weight * breakdown["preferred"]
+            + cfg.experience_weight * breakdown["experience"]
+            + cfg.education_weight * breakdown["education"]
+        )
 
-    matches = sum(1 for k in keywords if k.lower() in text)
-    return matches / len(keywords)
+        return round(final_score, 3), breakdown
 
-def final_match_score(candidate, job) -> float:
-    candidate_skills = normalize_list(candidate.skills)
-    required = normalize_list(job.required_skills)
-    preferred = normalize_list(job.preferred_skills)
+    def match(self, candidate: Candidate, job: Job) -> Dict:
+        score, breakdown = self.score(candidate, job)
 
-    req_skill_score = required_skills_score(candidate_skills, required)
+        return {
+            "score": score,
+            "level": match_level(score),
+            "breakdown": breakdown,
+        }
 
-    pref_skill_score = preferred_skill_score(candidate_skills, preferred)
-    exp_score = experience_score(candidate.experience, job)
-    edu_score = education_score(candidate.education, job.education_keywords)
+    def _expand_with_skill_groups(self, skills: Set[str]) -> Set[str]:
+        expanded = set(skills)
 
-    return round(
-    0.60 * req_skill_score +  # Required skills are 60% of the total
-    0.15 * pref_skill_score + # Preferred skills are 15%
-    0.15 * exp_score +        # Experience is 15%
-    0.10 * edu_score,         # Education is 10%
-    2
-)
+        for group_skills in SKILL_GROUPS.values():
+            if skills & group_skills:
+                expanded |= group_skills
 
-def matcher(candidate: Candidate, job: Job) -> str:
-    score = final_match_score(candidate, job)
-
-    return match_level(score)
+        return expanded

@@ -1,0 +1,28 @@
+Riley Taylor
+Email: riley.taylor@email.com
+Phone: 555-444-5555
+
+SUMMARY
+Motivated Junior Developer with 2 years of professional experience transitioning into backend engineering.
+
+SKILLS
+- Python
+- HTML
+- CSS
+- SQL
+- JavaScript
+- Git
+- Bootstrap
+- REST APIs
+
+EXPERIENCE
+Junior Web Developer at StartUp Hub (2024-Present)
+- Maintained frontend components and optimized page load times
+- Assisted in the creation of Python-based internal automation scripts
+
+Frontend Intern at Design Pros (2023-2024)
+- Developed responsive UI components using HTML, CSS, and JavaScript
+
+EDUCATION
+Self-Taught / Full-Stack Bootcamp
+Coding Academy, 2023
