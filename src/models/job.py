@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 
 @dataclass
@@ -8,9 +8,11 @@ class Job:
     description: str
     company: str
     location: str
-    required_skills: List[str]
+    hard_required_skills: List[str]
+    soft_required_skills: List[str]
     preferred_skills: List[str]
     min_experience: int
+    role_type: Literal["IC", "IC_SENIOR", "LEADERSHIP"] = "IC"
     max_experience: Optional[int] = None
     min_salary: Optional[int] = None
     max_salary: Optional[int] = None
@@ -32,14 +34,22 @@ class Job:
         if self.max_experience:
             experience_range = f"{self.min_experience}-{self.max_experience} years"
 
+        education_str = (
+            ", ".join(self.education_keywords)
+            if self.education_keywords
+            else "None"
+        )
+
         return (
             f"Job Title: {self.title}\n"
             f"Company: {self.company}\n"
             f"Location: {self.location}\n"
-            f"Description: {self.description[:100]}...\n"  # Truncated for readability
-            f"Required Skills: {', '.join(self.required_skills)}\n"
+            f"Description: {self.description[:100]}...\n"
+            f"Hard Required Skills: {', '.join(self.hard_required_skills)}\n"
+            f"Soft Required Skills: {', '.join(self.soft_required_skills)}\n"
             f"Preferred Skills: {', '.join(self.preferred_skills)}\n"
             f"Experience: {experience_range}\n"
+            f"Role Type: {self.role_type}\n"
             f"{salary_range}"
-            f"Education: {', '.join(self.education_keywords) if self.education_keywords else 'None'}"
+            f"Education: {education_str}"
         )

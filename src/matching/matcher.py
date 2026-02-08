@@ -22,28 +22,88 @@ class RuleBasedCandidateMatcher:
         self.config = config or MatchConfig()
 
     def _required_skill_score(
-        self, candidate: Set[str], required: Set[str], candidate_exp: int
+        self,
+        candidate: Set[str],
+        hard: Set[str],
+        soft: Set[str],
+        candidate_exp: int,
+        role_type: str,
+        is_junior: bool,
     ) -> float:
-        if not required:
+        """
+        Score required skills with separate handling for hard vs soft requirements.
+        
+        Hard required skills: Must-have, heavy penalty if missing
+        Soft required skills: Important but more forgiving, especially for seniors
+        """
+        if not hard and not soft:
             return 1.0
 
-        # Apply skill groups ONLY for seniors
-        if candidate_exp >= 10:
+        # Apply skill groups for seniors and leadership roles
+        if candidate_exp >= 10 or role_type == "LEADERSHIP":
             candidate = self._expand_with_skill_groups(candidate)
 
-        matched = len(candidate & required)
-        missing = len(required) - matched
+        # Score hard required skills (critical)
+        hard_score = 1.0
+        if hard:
+            hard_matched = len(candidate & hard)
+            hard_missing = len(hard) - hard_matched
+            hard_ratio = hard_matched / len(hard)
+            
+            # Heavy penalty for missing hard required skills
+            # Double penalty
+            hard_penalty = self.config.required_decay ** (hard_missing * 2)
+            hard_score = hard_ratio * hard_penalty
+            
+            # Set a lower floor for hard requirements
+            hard_score = max(0.1, hard_score)
 
-        ratio = matched / len(required)
+        # Score soft required skills (important but flexible)
+        soft_score = 1.0
+        if soft:
+            soft_matched = len(candidate & soft)
+            soft_missing = len(soft) - soft_matched
+            soft_ratio = soft_matched / len(soft)
+            
+            # Apply forgiveness based on experience and role
+            forgiveness = 0
+            
+            # Senior IC roles: forgive missing soft skills
+            if role_type == "IC_SENIOR":
+                # Forgive up to 2 missing soft skills
+                forgiveness = min(2, soft_missing)
+            
+            # Leadership roles: concepts and experience matter more
+            elif role_type == "LEADERSHIP":
+                # Forgive up to 3 missing soft skills
+                forgiveness = min(3, soft_missing)
+            
+            # Junior roles: forgive 1 missing web basic
+            elif is_junior:
+                web_basics = {"html", "css", "javascript", "js"}
+                missing_soft = soft - candidate
+                if missing_soft & web_basics:
+                    forgiveness = 1  # Forgive 1 missing web basic
+            
+            soft_missing = max(0, soft_missing - forgiveness)
+            
+            # Milder penalty for missing soft skills
+            soft_penalty = self.config.required_decay ** soft_missing
+            soft_score = soft_ratio * soft_penalty
+            
+            # Higher floor for soft requirements
+            soft_score = max(self.config.min_required_floor, soft_score)
 
-        # Seniors get one missing skill forgiven
-        if candidate_exp >= 10:
-            missing = max(0, missing - 1)
+        # Combine hard and soft scores
+        # Hard requirements are 70% of the score, soft are 30%
+        if hard and soft:
+            final_score = 0.7 * hard_score + 0.3 * soft_score
+        elif hard:
+            final_score = hard_score
+        else:
+            final_score = soft_score
 
-        penalty = self.config.required_decay**missing
-        score = ratio * penalty
-
-        return max(self.config.min_required_floor, score)
+        return final_score
 
     def _preferred_skill_score(self, candidate: Set[str], preferred: Set[str]) -> float:
         if not preferred:
@@ -80,12 +140,21 @@ class RuleBasedCandidateMatcher:
 
     def score(self, candidate: Candidate, job: Job) -> Tuple[float, Dict[str, float]]:
         cand_skills = set(normalize_list(candidate.skills))
-        req_skills = set(normalize_list(job.required_skills))
+        hard_req_skills = set(normalize_list(job.hard_required_skills))
+        soft_req_skills = set(normalize_list(job.soft_required_skills))
         pref_skills = set(normalize_list(job.preferred_skills))
+        
+        # Determine if this is a junior role
+        is_junior = job.min_experience <= 1
 
         breakdown = {
             "required": self._required_skill_score(
-                cand_skills, req_skills, candidate.experience
+                cand_skills,
+                hard_req_skills,
+                soft_req_skills,
+                candidate.experience,
+                job.role_type,
+                is_junior,
             ),
             "preferred": self._preferred_skill_score(cand_skills, pref_skills),
             "experience": self._experience_score(candidate.experience, job),

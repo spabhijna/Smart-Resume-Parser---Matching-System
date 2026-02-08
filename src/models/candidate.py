@@ -11,6 +11,7 @@ class Candidate:
     education: List[dict]
     experience: int
     resume_link: Optional[str] = None
+    ai_summary: Optional[str] = None  # AI-generated professional summary
 
     def __str__(self) -> str:
         return f"Candidate(name={self.name}, email={self.email}, skills={self.skills}, phone={self.phone}, resume_link={self.resume_link}, experience={self.experience}, education={self.education})"

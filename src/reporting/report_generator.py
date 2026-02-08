@@ -15,24 +15,30 @@ class JobReport:
         self.base_path = Path("src/storage")
         self.matcher = RuleBasedCandidateMatcher()
 
-    def add_candidate(self, candidate):
+    def add_candidate(self, candidate, ai_explanation=None, missing_hard=None, missing_soft=None):
         """Calculates score and prepares data for export."""
         match_result = self.matcher.match(candidate, self.job)
         score = match_result["score"]
         match_status = match_result["level"]
 
-        # Identify missing required skills for better reporting
-        cand_skills = set(normalize_list(candidate.skills))
-        req_skills = set(normalize_list(self.job.required_skills))
-        missing = list(req_skills - cand_skills)
+        # Use provided missing skills or calculate them
+        if missing_hard is None or missing_soft is None:
+            cand_skills = set(normalize_list(candidate.skills))
+            hard_req_skills = set(normalize_list(self.job.hard_required_skills))
+            soft_req_skills = set(normalize_list(self.job.soft_required_skills))
+            
+            missing_hard = list(hard_req_skills - cand_skills)
+            missing_soft = list(soft_req_skills - cand_skills)
 
         self.results.append(
             {
                 "candidate_name": candidate.name,
                 "score": score,
                 "match_level": match_status,
-                "missing_required_skills": missing,
+                "missing_hard_required_skills": missing_hard,
+                "missing_soft_required_skills": missing_soft,
                 "years_exp": candidate.experience,
+                "ai_explanation": ai_explanation or "",  # AI explanation of match
             }
         )
         # Keep results sorted by highest score

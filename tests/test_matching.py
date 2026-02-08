@@ -6,7 +6,6 @@ from src.matching.matcher import RuleBasedCandidateMatcher
 from src.models.job import Job
 from src.models.match_config import MatchConfig
 from src.parsing.parser import ResumeParser
-from src.utils.matcher_utils import normalize_list
 
 
 @pytest.fixture
@@ -35,10 +34,12 @@ def ml_engineer_job():
         description="Looking for an experienced ML engineer to build AI systems",
         company="AI Solutions Inc",
         location="San Francisco, CA",
-        required_skills=["Python", "Machine Learning", "TensorFlow"],
+        hard_required_skills=["Python"],
+        soft_required_skills=["Machine Learning", "TensorFlow"],
         preferred_skills=["Deep Learning", "NLP", "SQL"],
         min_experience=4,
         max_experience=7,
+        role_type="IC_SENIOR",
         min_salary=120000,
         max_salary=180000,
         education_keywords=["Computer Science", "Master"],
@@ -53,10 +54,12 @@ def backend_engineer_job():
         description="Backend development role",
         company="Web Corp",
         location="New York, NY",
-        required_skills=["Python", "Django", "SQL", "Redis"],
+        hard_required_skills=["Python", "Django"],
+        soft_required_skills=["SQL", "Redis"],
         preferred_skills=["Flask", "PostgreSQL"],
         min_experience=3,
         max_experience=5,
+        role_type="IC",
         education_keywords=["Computer Science"],
     )
 
@@ -69,10 +72,12 @@ def unrelated_job():
         description="React and TypeScript development",
         company="UI Corp",
         location="Austin, TX",
-        required_skills=["JavaScript", "React", "TypeScript", "HTML", "CSS"],
+        hard_required_skills=["JavaScript", "React"],
+        soft_required_skills=["TypeScript", "HTML", "CSS"],
         preferred_skills=["Redux", "GraphQL"],
         min_experience=2,
         max_experience=4,
+        role_type="IC",
         education_keywords=["Computer Science"],
     )
 
@@ -95,7 +100,7 @@ class TestMatcherWithTestResume:
     ):
         """Test required skills scoring for ML job."""
         score, breakdown = matcher.score(test_resume_candidate, ml_engineer_job)
-        # John has Python, Machine Learning, and TensorFlow
+        # John has Python (hard), Machine Learning, and TensorFlow (soft)
         assert breakdown["required"] > 0.8, (
             f"Expected high required skills score, got {breakdown['required']}"
         )
@@ -105,9 +110,11 @@ class TestMatcherWithTestResume:
     ):
         """Test required skills scoring for backend job - missing Redis."""
         score, breakdown = matcher.score(test_resume_candidate, backend_engineer_job)
-        # John has Python, Django, SQL but missing Redis (3 out of 4)
-        assert 0.3 < breakdown["required"] < 0.9, (
-            f"Expected moderate score due to missing Redis, got {breakdown['required']}"
+        # John has Python, Django (hard), SQL but missing Redis (soft)
+        # Should still score well
+        assert 0.5 < breakdown["required"] < 1.0, (
+            f"Expected good score with only soft skill missing, "
+            f"got {breakdown['required']}"
         )
 
     def test_required_skills_match_unrelated_job(
@@ -115,8 +122,8 @@ class TestMatcherWithTestResume:
     ):
         """Test required skills scoring for unrelated frontend job."""
         score, breakdown = matcher.score(test_resume_candidate, unrelated_job)
-        # John doesn't have most frontend skills
-        assert breakdown["required"] < 0.3, (
+        # John doesn't have hard required skills (JavaScript, React)
+        assert breakdown["required"] < 0.4, (
             f"Expected low score for unrelated job, got {breakdown['required']}"
         )
 
@@ -162,7 +169,9 @@ class TestMatcherWithTestResume:
         assert score < 0.40, f"Expected low match for unrelated job, got {score}"
 
     def test_matcher_ml_job(self, test_resume_candidate, ml_engineer_job, matcher):
-        """Test full matcher function for ML job - should be Strong Match or Top Talent."""
+        """Test full matcher function for ML job.
+        Should be Strong Match or Top Talent.
+        """
         result = matcher.match(test_resume_candidate, ml_engineer_job)
         assert result["level"] in ["Strong Match", "Top Talent"], (
             f"Expected high match level, got {result['level']}"
@@ -183,7 +192,9 @@ class TestMatcherWithTestResume:
         assert "breakdown" in result
 
     def test_matcher_unrelated_job(self, test_resume_candidate, unrelated_job, matcher):
-        """Test full matcher function for unrelated job - should be Low Relevance or Not Recommended."""
+        """Test full matcher function for unrelated job.
+        Should be Low Relevance or Not Recommended.
+        """
         result = matcher.match(test_resume_candidate, unrelated_job)
         assert result["level"] in [
             "Low Relevance",

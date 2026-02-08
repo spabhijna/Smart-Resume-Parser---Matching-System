@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Environment variables (contains API keys)
+.env
+
 # Test metadata and cache
 .pytest_cache/
 .tox/
