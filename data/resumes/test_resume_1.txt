@@ -1,0 +1,35 @@
+John Smith
+Email: john.smith@email.com
+Phone: 555-123-4567
+
+SUMMARY
+Experienced software engineer with 5+ years in machine learning and AI development.
+
+SKILLS
+- Python
+- Machine Learning
+- Deep Learning
+- TensorFlow
+- SQL
+- Django
+- Flask
+- Natural Language Processing
+- Computer Vision
+- GitHub
+
+EXPERIENCE
+Senior Software Engineer at Tech Corp (2020-Present)
+- Developed machine learning models for customer analytics
+- Built NLP systems for text classification
+- Led team of 5 engineers
+
+Software Engineer at Data Inc (2018-2020)
+- Created data pipelines using Python and SQL
+- Implemented deep learning models with TensorFlow
+
+EDUCATION
+Master of Science in Computer Science
+Stanford University, 2018
+
+Bachelor of Science in Computer Science  
+MIT, 2016
