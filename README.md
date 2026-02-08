@@ -32,7 +32,7 @@ python -m src.cli analyze data/resumes/candidate.txt
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone git@github.com:spabhijna/Smart-Resume-Parser---Matching-System.git
 cd Resume-Parser
 
 # Install dependencies
