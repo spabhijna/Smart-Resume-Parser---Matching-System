@@ -41,17 +41,50 @@ pip install -e .
 
 ### 2. Configure AI Integration (Optional)
 
-Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey) and add it to `.env`:
+Choose between **Google Gemini** or **Groq** (both cloud APIs with generous free tiers):
+
+#### Option A: Google Gemini (Cloud - Requires API Key)
+
+Get a free API key from [Google AI Studio](https://makersuite.google.com/app/apikey) and configure:
 
 ```bash
 # Copy the template
 cp .env.template .env
 
-# Edit .env and add your API key
+# Edit .env and set:
+AI_PROVIDER=gemini
 GEMINI_API_KEY=your-actual-api-key-here
+GEMINI_MODEL=gemini-flash-latest
 ```
 
-**Note**: The system works without AI, but you'll miss out on:
+✅ **Pros**: Fast, no local installation, high quality  
+⚠️ **Cons**: Requires API key, rate limits (20 requests/day free tier), sends data to Google
+
+#### Option B: Groq (Cloud - Generous Free Tier)
+
+Get a free API key from [Groq Console](https://console.groq.com/keys) and configure:
+
+```bash
+# Copy the template
+cp .env.template .env
+
+# Edit .env and set:
+AI_PROVIDER=groq
+GROQ_API_KEY=your-groq-api-key-here
+GROQ_MODEL=llama-3.2-3b-preview  # Recommended
+
+# Available Groq models:
+# llama-3.2-3b-preview    - Fast & lightweight (recommended)
+# mixtral-8x7b-32768      - High quality, larger context
+# gemma2-9b-it            - Google model on Groq infrastructure
+```
+
+✅ **Pros**: Extremely fast (~500 tokens/sec), generous free tier, no local installation  
+⚠️ **Cons**: Requires API key, sends data to Groq
+
+#### No AI (Works Without Configuration)
+
+The system works without AI, but you'll miss out on:
 - Professional candidate summaries
 - Match explanations
 - Feedback analysis and improvement suggestions
@@ -234,15 +267,71 @@ class MatchConfig:
 
 ### AI Configuration
 
-Edit AI behavior in `.env`:
+Choose your AI provider in `.env`:
 
+#### Provider Selection
+```bash
+# Choose provider: "gemini" or "groq"
+AI_PROVIDER=gemini                # or "groq" for Groq cloud API
+```
+
+#### Google Gemini Configuration (AI_PROVIDER=gemini)
 ```bash
 GEMINI_API_KEY=your-api-key-here
-AI_MODEL=gemini-flash-latest          # Latest stable flash model (recommended)
-# AI_MODEL=gemini-2.5-flash          # Specific version
-# AI_MODEL=gemini-pro-latest         # More capable, slower
-AI_MAX_TOKENS=2000                 # Max response length
-AI_TEMPERATURE=0.7                 # Creativity (0.0-1.0)
+GEMINI_MODEL=gemini-flash-latest  # Latest stable flash model (recommended)
+# GEMINI_MODEL=gemini-2.5-flash   # Specific version
+# GEMINI_MODEL=gemini-pro-latest  # More capable, slower
+```
+
+#### Groq Configuration (AI_PROVIDER=groq)
+```bash
+GROQ_API_KEY=your-groq-api-key-here  # Get from: https://console.groq.com/keys
+GROQ_MODEL=llama-3.2-3b-preview      # Recommended
+
+# Available Groq models:
+# llama-3.2-3b-preview    - Fast, 3B params, great for development
+# mixtral-8x7b-32768      - High quality, 47B params, 32K context
+# gemma2-9b-it            - Google's Gemma model, 9B params
+```
+
+#### Shared Configuration
+```bash
+AI_MAX_TOKENS=2000           # Max response length
+AI_TEMPERATURE=0.7           # Creativity (0.0-1.0)
+```
+
+#### Provider Comparison
+
+| Feature | Gemini (Cloud) | Groq (Cloud) |
+|---------|----------------|-------------|
+| **Cost** | Free tier (20 req/day) | Generous free tier |
+| **Speed** | Fast (~1-3s) | Extremely fast (~1-2s) |
+| **Privacy** | Data sent to Google | Data sent to Groq |
+| **Setup** | API key only | API key only |
+| **Quality** | High | Good to High (model-dependent) |
+| **Rate Limits** | 20 req/day (free) | Generous (varies by model) |
+| **Best For** | High quality responses | Fast inference, development |
+
+#### Troubleshooting
+
+**Google Gemini Issues:**
+```bash
+# Verify API key is set
+echo $GEMINI_API_KEY
+
+# Test connection
+python test_ai_connection.py
+```
+
+**Groq Issues:**
+```bash
+# Verify API key is set
+echo $GROQ_API_KEY
+
+# Test connection
+python test_ai_connection.py
+
+# Get API key from: https://console.groq.com/keys
 ```
 
 ## 🧪 Testing
@@ -319,7 +408,8 @@ This project is licensed under the MIT License.
 ## 🙏 Acknowledgments
 
 - **spaCy** for NLP capabilities
-- **Google Gemini** for AI-powered insights
+- **Google Gemini** for cloud-based AI insights
+- **Ollama** for local LLM support
 - **Python** for being awesome
 
 ---

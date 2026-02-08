@@ -1,13 +1,14 @@
 """
 AI service for providing human-readable insights on candidate matching.
-Uses Google Gemini to explain scores, summarize profiles, and learn from feedback.
+Supports both Google Gemini and Groq cloud LLM providers.
 """
 
 import time
 from typing import Optional
 
-import google.generativeai as genai
-
+from src.ai.base_client import BaseLLMClient
+from src.ai.gemini_client import GeminiClient
+from src.ai.groq_client import GroqClient
 from src.ai.prompts import (
     get_candidate_summary_prompt,
     get_feedback_analysis_prompt,
@@ -22,6 +23,10 @@ class HiringAIAssistant:
     """
     AI assistant for hiring decisions.
     
+    Supports multiple AI providers:
+    - Google Gemini: Cloud-based API (requires API key)
+    - Groq: Cloud-based API with generous free tier (requires API key)
+    
     Philosophy:
     - AI explains, humans decide
     - Graceful degradation (system works without AI)
@@ -31,12 +36,34 @@ class HiringAIAssistant:
     def __init__(self, config: Optional[AIConfig] = None):
         """Initialize AI assistant with configuration."""
         self.config = config or AIConfig()
-        self.enabled = self.config.is_enabled()
+        self.client: Optional[BaseLLMClient] = None
+        self.enabled = False
         
-        if self.enabled:
+        # Factory pattern: select client based on provider
+        if self.config.is_enabled():
             try:
-                genai.configure(api_key=self.config.api_key)
-                self.model = genai.GenerativeModel(self.config.model)
+                if self.config.provider == "gemini":
+                    self.client = GeminiClient(
+                        api_key=self.config.api_key,
+                        model=self.config.gemini_model,
+                        timeout=self.config.timeout
+                    )
+                elif self.config.provider == "groq":
+                    self.client = GroqClient(
+                        api_key=self.config.groq_api_key,
+                        model=self.config.groq_model,
+                        timeout=self.config.timeout
+                    )
+                else:
+                    print(f"⚠️  Unknown AI provider: {self.config.provider}")
+                    self.client = None
+                
+                if self.client and self.client.is_available():
+                    self.enabled = True
+                else:
+                    print(f"⚠️  {self.config.provider.title()} client not available")
+                    self.enabled = False
+                    
             except Exception as e:
                 print(f"⚠️  Failed to initialize AI service: {e}")
                 self.enabled = False
@@ -50,6 +77,8 @@ class HiringAIAssistant:
         """
         Call AI with exponential backoff retry logic.
         
+        Works with any LLM provider (Gemini, Ollama, etc.)
+        
         Args:
             prompt: The prompt to send to the AI
             max_retries: Maximum number of retry attempts
@@ -58,7 +87,7 @@ class HiringAIAssistant:
         Returns:
             AI response text or None on failure
         """
-        if not self.enabled:
+        if not self.enabled or not self.client:
             return None
         
         delay = initial_delay
@@ -66,14 +95,12 @@ class HiringAIAssistant:
         
         for attempt in range(max_retries):
             try:
-                response = self.model.generate_content(
-                    prompt,
-                    generation_config=genai.types.GenerationConfig(
-                        max_output_tokens=self.config.max_tokens,
-                        temperature=self.config.temperature,
-                    )
+                response = self.client.generate_content(
+                    prompt=prompt,
+                    max_tokens=self.config.max_tokens,
+                    temperature=self.config.temperature
                 )
-                return response.text
+                return response
                 
             except Exception as e:
                 last_error = e
