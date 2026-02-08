@@ -11,20 +11,20 @@
 - **Reporting**: Generate detailed JSON reports with match scores and recommendations
 - **Extensible**: Modular architecture makes it easy to add new features
 
-## � Two Modes of Operation
+## 🎯 Two Modes of Operation
 
 ### 1️⃣ Batch Pipeline (Process Multiple Resumes)
 Best for: Initial screening of many candidates
 ```bash
-uv run python -m src.main
+python -m src.cli batch
 ```
 
 ### 2️⃣ One-on-One Analyzer (Deep Dive Single Candidate)
 Best for: Detailed analysis of shortlisted candidates
 ```bash
-python analyze_candidate.py data/resumes/candidate.txt
+python -m src.cli analyze data/resumes/candidate.txt
 ```
-📖 See [ANALYZER_README.md](ANALYZER_README.md) for detailed usage
+📖 See [docs/ANALYZER_README.md](docs/ANALYZER_README.md) for detailed usage
 
 ## �🚀 Quick Start
 
@@ -89,61 +89,99 @@ The system works without AI, but you'll miss out on:
 - Match explanations
 - Feedback analysis and improvement suggestions
 
-### 3. Run the Pipeline
+### 3. Run the Application
 
+**Batch Pipeline** (process all resumes):
 ```bash
-python -m src.main
+python -m src.cli batch
 ```
 
-Or using uv:
-
+**One-on-One Analysis** (single resume):
 ```bash
-uv run python -m src.main
+python -m src.cli analyze data/resumes/candidate.txt
+```
+
+**Get Help**:
+```bash
+python -m src.cli help
 ```
 
 ## 📁 Project Structure
 
+```
 smart-hiring-assistant/
 │
-├── README.md
+├── README.md               # Main documentation
 ├── pyproject.toml          # Dependencies and project config
 ├── .env                    # Environment variables (API keys)
 ├── .env.template           # Template for environment setup
 ├── .gitignore
 │
 ├── data/
-│   ├── resumes/            # Raw input resumes (.txt)
-│   └── jobs/               # Job descriptions (JobRequirement objects)
+│   └── resumes/            # Raw input resumes (.txt)
+│
+├── output/                 # Generated reports and AI suggestions
+│   ├── *.json              # Match reports
+│   └── ai_suggestions.txt  # AI feedback analysis
+│
+├── docs/                   # Documentation
+│   ├── AI_INTEGRATION_GUIDE.md
+│   ├── ANALYZER_README.md
+│   └── AI_FIX_SUMMARY.md
+│
+├── scripts/                # Utility scripts
+│   ├── test_ai_connection.py  # Test AI API connectivity
+│   ├── list_models.py         # List available models
+│   └── demo_analyzer.py       # Demo output display
 │
 ├── src/
-│   ├── main.py              # Pipeline orchestration
+│   ├── __init__.py
 │   ├── config.py            # AI configuration management
+│   ├── main.py              # ResumeParserPipeline class
+│   ├── fixtures.py          # Sample job postings for testing
+│   │
+│   ├── cli/                 # Command-line interface
+│   │   ├── __init__.py
+│   │   ├── __main__.py      # CLI dispatcher
+│   │   ├── batch_pipeline.py   # Batch processing command
+│   │   └── analyze_one.py      # Single resume analysis command
 │   │
 │   ├── models/              # Data models
+│   │   ├── __init__.py
 │   │   ├── candidate.py     # Candidate dataclass
 │   │   ├── job.py           # Job dataclass
 │   │   └── match_config.py  # Matching configuration
 │   │
 │   ├── parsing/             # Resume parsing
+│   │   ├── __init__.py
 │   │   └── parser.py        # ResumeParser class (regex + spaCy)
 │   │
 │   ├── matching/            # Candidate matching
+│   │   ├── __init__.py
 │   │   └── matcher.py       # RuleBasedCandidateMatcher
 │   │
 │   ├── reporting/           # Report generation
+│   │   ├── __init__.py
 │   │   └── report_generator.py
 │   │
-│   ├── ai/                  # AI integration (NEW!)
+│   ├── ai/                  # AI integration
+│   │   ├── __init__.py
 │   │   ├── ai_service.py    # HiringAIAssistant class
+│   │   ├── base_client.py   # LLM client protocol
+│   │   ├── gemini_client.py # Google Gemini implementation
+│   │   ├── groq_client.py   # Groq API implementation
 │   │   └── prompts.py       # Prompt templates
 │   │
-│   ├── storage/             # JSON output files
 │   └── utils/               # Helper utilities
+│       ├── __init__.py
+│       └── matcher_utils.py
 │
 └── tests/
+    ├── __init__.py
     ├── test_parser.py
     ├── test_matching.py
     └── test_ai_service.py   # AI service tests (with mocking)
+```
 
 ## 🤖 AI Integration
 
@@ -220,7 +258,7 @@ suggestions = ai_assistant.suggest_refinements(feedback_batch)
 
 ### How to Use Feedback Loop
 
-1. Run the pipeline: `python -m src.main`
+1. Run the pipeline: `python -m src.cli batch`
 2. After displaying top candidates, you'll be prompted:
    ```
    Would you like to provide feedback on candidates? (y/n): y
@@ -232,7 +270,7 @@ suggestions = ai_assistant.suggest_refinements(feedback_batch)
       Notes (optional): Strong systems thinker, ML concepts solid
    ```
 4. AI analyzes patterns and suggests improvements
-5. Suggestions are saved to `src/storage/ai_suggestions.txt`
+5. Suggestions are saved to `output/ai_suggestions.txt`
 
 ### Philosophy: AI Explains, Humans Decide
 
@@ -320,7 +358,7 @@ AI_TEMPERATURE=0.7           # Creativity (0.0-1.0)
 echo $GEMINI_API_KEY
 
 # Test connection
-python test_ai_connection.py
+python scripts/test_ai_connection.py
 ```
 
 **Groq Issues:**
@@ -329,7 +367,7 @@ python test_ai_connection.py
 echo $GROQ_API_KEY
 
 # Test connection
-python test_ai_connection.py
+python scripts/test_ai_connection.py
 
 # Get API key from: https://console.groq.com/keys
 ```
@@ -360,7 +398,7 @@ pytest tests/test_ai_service.py -v
 
 ### Add a Job
 
-1. Edit `data/jobs/Jobs.py`
+1. Edit `src/fixtures.py`
 2. Create a new `Job` object:
 
 ```python

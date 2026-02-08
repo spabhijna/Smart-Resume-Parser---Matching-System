@@ -1,5 +1,17 @@
+"""
+Sample job postings for testing and demonstration.
+
+This module contains predefined Job instances used for:
+- Testing the resume parser and matching system
+- Demonstrating functionality in CLI tools
+- Running examples and demos
+
+These are not production data - they're fixtures for development and testing.
+"""
+
 from src.models.job import Job
 
+# Machine Learning Engineer position - senior IC role
 ml_job = Job(
     title="Machine Learning Engineer",
     company="NeuralNet Labs",
@@ -16,6 +28,7 @@ ml_job = Job(
     education_keywords=["Master's", "PhD", "Computer Science", "Mathematics"],
 )
 
+# Junior Web Developer - entry-level IC role
 junior_job = Job(
     title="Junior Web Developer",
     company="GreenSeed Startups",
@@ -32,6 +45,7 @@ junior_job = Job(
     education_keywords=["Bachelor's", "Bootcamp"],
 )
 
+# Engineering Manager - leadership role
 manager_job = Job(
     title="Engineering Manager",
     company="Global Fintech",

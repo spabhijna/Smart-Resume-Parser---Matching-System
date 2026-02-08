@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Demo script showing example output of the one-on-one analyzer.
 Run this to see what the analyzer produces without making real API calls.
@@ -98,9 +98,9 @@ Save detailed analysis to file? (y/n): y
 
 """)
 
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("KEY FEATURES OF THE ANALYZER:")
-print("="*70)
+print("=" * 70)
 print("""
 ✅ Detailed Skill Breakdown
    - Shows which required skills are matched/missing
@@ -131,9 +131,9 @@ print("""
    - Compare multiple analyses
 """)
 
-print("\n" + "="*70)
+print("\n" + "=" * 70)
 print("USAGE EXAMPLES:")
-print("="*70)
+print("=" * 70)
 print("""
 # Interactive mode - choose resume and job
 python analyze_candidate.py

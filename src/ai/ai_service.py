@@ -22,11 +22,11 @@ from src.models.job import Job
 class HiringAIAssistant:
     """
     AI assistant for hiring decisions.
-    
+
     Supports multiple AI providers:
     - Google Gemini: Cloud-based API (requires API key)
     - Groq: Cloud-based API with generous free tier (requires API key)
-    
+
     Philosophy:
     - AI explains, humans decide
     - Graceful degradation (system works without AI)
@@ -38,7 +38,7 @@ class HiringAIAssistant:
         self.config = config or AIConfig()
         self.client: Optional[BaseLLMClient] = None
         self.enabled = False
-        
+
         # Factory pattern: select client based on provider
         if self.config.is_enabled():
             try:
@@ -46,68 +46,65 @@ class HiringAIAssistant:
                     self.client = GeminiClient(
                         api_key=self.config.api_key,
                         model=self.config.gemini_model,
-                        timeout=self.config.timeout
+                        timeout=self.config.timeout,
                     )
                 elif self.config.provider == "groq":
                     self.client = GroqClient(
                         api_key=self.config.groq_api_key,
                         model=self.config.groq_model,
-                        timeout=self.config.timeout
+                        timeout=self.config.timeout,
                     )
                 else:
                     print(f"⚠️  Unknown AI provider: {self.config.provider}")
                     self.client = None
-                
+
                 if self.client and self.client.is_available():
                     self.enabled = True
                 else:
                     print(f"⚠️  {self.config.provider.title()} client not available")
                     self.enabled = False
-                    
+
             except Exception as e:
                 print(f"⚠️  Failed to initialize AI service: {e}")
                 self.enabled = False
 
     def _call_ai_with_retry(
-        self, 
-        prompt: str, 
-        max_retries: int = 3,
-        initial_delay: float = 1.0
+        self, prompt: str, max_retries: int = 3, initial_delay: float = 1.0
     ) -> Optional[str]:
         """
         Call AI with exponential backoff retry logic.
-        
+
         Works with any LLM provider (Gemini, Ollama, etc.)
-        
+
         Args:
             prompt: The prompt to send to the AI
             max_retries: Maximum number of retry attempts
             initial_delay: Initial delay in seconds before first retry
-            
+
         Returns:
             AI response text or None on failure
         """
         if not self.enabled or not self.client:
             return None
-        
+
         delay = initial_delay
         last_error = None
-        
+
         for attempt in range(max_retries):
             try:
                 response = self.client.generate_content(
                     prompt=prompt,
                     max_tokens=self.config.max_tokens,
-                    temperature=self.config.temperature
+                    temperature=self.config.temperature,
                 )
                 return response
-                
+
             except Exception as e:
                 last_error = e
                 if attempt < max_retries - 1:
                     time.sleep(delay)
                     delay *= 2  # Exponential backoff
-                    
+
         # All retries failed
         print(f"⚠️  AI call failed after {max_retries} attempts: {last_error}")
         return None
@@ -115,18 +112,18 @@ class HiringAIAssistant:
     def summarize_candidate(self, candidate: Candidate) -> Optional[str]:
         """
         Generate a professional summary of a candidate's profile.
-        
+
         Use after parsing to provide human-readable insights.
-        
+
         Args:
             candidate: Parsed candidate object
-            
+
         Returns:
             Professional summary or None on failure
         """
         if not self.enabled:
             return None
-        
+
         try:
             prompt = get_candidate_summary_prompt(candidate)
             summary = self._call_ai_with_retry(prompt)
@@ -142,13 +139,13 @@ class HiringAIAssistant:
         score: float,
         breakdown: dict,
         missing_hard: list = None,
-        missing_soft: list = None
+        missing_soft: list = None,
     ) -> Optional[str]:
         """
         Generate human-readable explanation of why candidate received a score.
-        
+
         Use after matching to help recruiters understand the reasoning.
-        
+
         Args:
             candidate: Candidate object
             job: Job object
@@ -156,13 +153,13 @@ class HiringAIAssistant:
             breakdown: Score breakdown by component
             missing_hard: List of missing hard required skills
             missing_soft: List of missing soft required skills
-            
+
         Returns:
             Match explanation or None on failure
         """
         if not self.enabled:
             return None
-        
+
         try:
             prompt = get_match_explanation_prompt(
                 candidate=candidate,
@@ -170,7 +167,7 @@ class HiringAIAssistant:
                 score=score,
                 breakdown=breakdown,
                 missing_hard=missing_hard or [],
-                missing_soft=missing_soft or []
+                missing_soft=missing_soft or [],
             )
             explanation = self._call_ai_with_retry(prompt)
             return explanation
@@ -181,9 +178,9 @@ class HiringAIAssistant:
     def suggest_refinements(self, feedback_batch: list) -> Optional[str]:
         """
         Analyze hiring feedback and suggest improvements to matching rules.
-        
+
         Use after collecting recruiter feedback to learn patterns.
-        
+
         Args:
             feedback_batch: List of feedback dicts with keys:
                 - candidate_name: str
@@ -191,16 +188,16 @@ class HiringAIAssistant:
                 - score: float
                 - decision: str (e.g., "interviewed", "passed", "hired")
                 - notes: str
-                
+
         Returns:
             Refinement suggestions or None on failure
         """
         if not self.enabled:
             return None
-        
+
         if not feedback_batch:
             return "No feedback provided for analysis."
-        
+
         try:
             prompt = get_feedback_analysis_prompt(feedback_batch)
             suggestions = self._call_ai_with_retry(prompt)

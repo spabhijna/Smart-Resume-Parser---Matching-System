@@ -1,7 +1,12 @@
+#!/usr/bin/env python3
 """
-One-on-One Resume Analyzer
+One-on-One Resume Analyzer CLI
 Analyze a single candidate's resume against a specific job posting.
 Provides detailed matching insights and AI-powered recommendations.
+
+Usage:
+    python -m src.cli.analyze_one <resume_file>
+    python -m src.cli.analyze_one data/resumes/candidate.txt
 """
 
 import sys
@@ -270,8 +275,8 @@ def main():
     analyzer = OneOnOneAnalyzer()
 
     # Get resume path
-    if len(sys.argv) > 1:
-        resume_path = sys.argv[1]
+    if len(sys.argv) > 2:
+        resume_path = sys.argv[2]
     else:
         print("\nEnter resume file path:")
         print("(e.g., data/resumes/Dr_Sarah_Chen_resume.txt)")

@@ -1,5 +1,4 @@
-"""
-Quick test to verify AI service can connect to Google Gemini API.
+"""#!/usr/bin/env python3Quick test to verify AI service can connect to Google Gemini API.
 Run this to test your API key and model configuration.
 """
 
@@ -14,7 +13,7 @@ test_candidate = Candidate(
     skills=["python", "machine learning", "aws"],
     education=[{"degree": "BSC", "raw": "Bachelor of Science", "year": "2020"}],
     experience=3,
-    resume_link="test.txt"
+    resume_link="test.txt",
 )
 
 # Initialize AI assistant

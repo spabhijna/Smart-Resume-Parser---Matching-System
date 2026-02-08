@@ -35,9 +35,7 @@ class Job:
             experience_range = f"{self.min_experience}-{self.max_experience} years"
 
         education_str = (
-            ", ".join(self.education_keywords)
-            if self.education_keywords
-            else "None"
+            ", ".join(self.education_keywords) if self.education_keywords else "None"
         )
 
         return (

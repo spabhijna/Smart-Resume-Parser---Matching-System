@@ -12,10 +12,12 @@ class JobReport:
     def __init__(self, job: Job):
         self.job = job
         self.results = []
-        self.base_path = Path("src/storage")
+        self.base_path = Path("output")
         self.matcher = RuleBasedCandidateMatcher()
 
-    def add_candidate(self, candidate, ai_explanation=None, missing_hard=None, missing_soft=None):
+    def add_candidate(
+        self, candidate, ai_explanation=None, missing_hard=None, missing_soft=None
+    ):
         """Calculates score and prepares data for export."""
         match_result = self.matcher.match(candidate, self.job)
         score = match_result["score"]
@@ -26,7 +28,7 @@ class JobReport:
             cand_skills = set(normalize_list(candidate.skills))
             hard_req_skills = set(normalize_list(self.job.hard_required_skills))
             soft_req_skills = set(normalize_list(self.job.soft_required_skills))
-            
+
             missing_hard = list(hard_req_skills - cand_skills)
             missing_soft = list(soft_req_skills - cand_skills)
 
@@ -53,7 +55,7 @@ class JobReport:
             json.dump({"job": self.job.title, "rankings": self.results}, f, indent=4)
 
     def to_csv(self, filename: str = "job_report"):
-        """Writes the report to src/storage/filename.csv."""
+        """Writes the report to output/filename.csv."""
         if not self.results:
             return "No data to export."
 

@@ -19,6 +19,9 @@ wheels/
 htmlcov/
 .pytest_cache/
 
-# Specific storage folder (Optional)
-src/storage/*.csv
-src/storage/*.json
+# Generated output files
+output/
+
+# IDE settings
+.vscode/
+.idea/

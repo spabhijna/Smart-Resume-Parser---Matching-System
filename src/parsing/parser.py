@@ -18,33 +18,47 @@ class ResumeParser:
 
     SKILLS_DB = {
         # Languages
-        "python", "java", "c++", "go",
-
+        "python",
+        "java",
+        "c++",
+        "go",
         # Web / Backend
-        "django", "flask", "fastapi",
-
+        "django",
+        "flask",
+        "fastapi",
         # ML / AI
-        "machine learning", "deep learning", "nlp",
-        "computer vision", "tensorflow", "pytorch", "scikit-learn",
-
+        "machine learning",
+        "deep learning",
+        "nlp",
+        "computer vision",
+        "tensorflow",
+        "pytorch",
+        "scikit-learn",
         # Data
-        "sql", "nosql", "mongodb", "mysql",
-
+        "sql",
+        "nosql",
+        "mongodb",
+        "mysql",
         # Cloud / Infra
-        "docker", "kubernetes", "terraform",
-        "aws", "gcp", "azure",
-
+        "docker",
+        "kubernetes",
+        "terraform",
+        "aws",
+        "gcp",
+        "azure",
         # Engineering concepts
-        "system design", "distributed systems",
-        "microservices", "architecture",
-
+        "system design",
+        "distributed systems",
+        "microservices",
+        "architecture",
         # Process / leadership
-        "project management", "agile", "mentorship",
-
+        "project management",
+        "agile",
+        "mentorship",
         # Tools
-        "git", "github",
+        "git",
+        "github",
     }
-
 
     DEGREE_MAP = {
         "BSC": ["BACHELOR OF SCIENCE", "B.SC", "BSC"],
@@ -83,7 +97,6 @@ class ResumeParser:
 
         skills = self._extract_skills()
 
-
         education = self._extract_education()
 
         experience_blocks = self._extract_experience()
@@ -99,7 +112,6 @@ class ResumeParser:
 
             if any(k in text_lower for k in ["led", "managed", "director", "mentored"]):
                 skills.append("project management")
-
 
         return Candidate(
             name=name,
@@ -177,7 +189,6 @@ class ResumeParser:
                 found.add(skill)
 
         return sorted(found)
-
 
     # ---------------------------
     # Education

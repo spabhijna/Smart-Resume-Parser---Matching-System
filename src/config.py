@@ -19,15 +19,15 @@ class AIConfig:
 
     # Provider selection: "gemini" or "groq" (both cloud APIs)
     provider: str = os.getenv("AI_PROVIDER", "gemini")
-    
+
     # Google Gemini configuration
     api_key: str = os.getenv("GEMINI_API_KEY", "")
     gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
-    
+
     # Groq configuration
     groq_api_key: str = os.getenv("GROQ_API_KEY", "")
     groq_model: str = os.getenv("GROQ_MODEL", "llama-3.2-3b-preview")
-    
+
     # Shared configuration
     max_tokens: int = int(os.getenv("AI_MAX_TOKENS", "2000"))
     temperature: float = float(os.getenv("AI_TEMPERATURE", "0.7"))
@@ -55,7 +55,7 @@ class AIConfig:
         if self.provider not in ["gemini", "groq"]:
             print(f"⚠️  Invalid AI provider '{self.provider}', defaulting to 'gemini'")
             object.__setattr__(self, "provider", "gemini")
-        
+
         if not self.is_enabled():
             if self.provider == "gemini":
                 print("⚠️  AI service disabled: GEMINI_API_KEY not configured")

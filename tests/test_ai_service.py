@@ -27,7 +27,7 @@ def test_candidate():
         education=[{"degree": "MSC", "raw": "Master of Science", "year": "2020"}],
         experience=5,
         resume_link="test_resume.txt",
-        ai_summary=None
+        ai_summary=None,
     )
 
 
@@ -43,7 +43,7 @@ def test_job():
         soft_required_skills=["pytorch", "tensorflow"],
         preferred_skills=["docker"],
         min_experience=3,
-        role_type="IC_SENIOR"
+        role_type="IC_SENIOR",
     )
 
 
@@ -78,28 +78,28 @@ def mock_genai_response():
 class TestHiringAIAssistant:
     """Test suite for HiringAIAssistant class."""
 
-    @patch('src.ai.gemini_client.genai')
+    @patch("src.ai.gemini_client.genai")
     def test_initialization_with_gemini(self, mock_genai, mock_ai_config_gemini):
         """Test that AI assistant initializes correctly with Gemini provider."""
         mock_genai.configure = MagicMock()
         mock_genai.GenerativeModel = MagicMock(return_value=MagicMock())
-        
+
         assistant = HiringAIAssistant(config=mock_ai_config_gemini)
-        
+
         assert assistant.enabled is True
         assert isinstance(assistant.client, GeminiClient)
         mock_genai.configure.assert_called_once()
 
-    @patch('src.ai.groq_client.Groq')
+    @patch("src.ai.groq_client.Groq")
     def test_initialization_with_groq(self, mock_groq_class, mock_ai_config_groq):
         """Test that AI assistant initializes correctly with Groq provider."""
         # Mock Groq client instance
         mock_groq_instance = MagicMock()
         mock_groq_instance.models.list.return_value = []
         mock_groq_class.return_value = mock_groq_instance
-        
+
         assistant = HiringAIAssistant(config=mock_ai_config_groq)
-        
+
         assert assistant.enabled is True
         assert isinstance(assistant.client, GroqClient)
         mock_groq_class.assert_called_once()
@@ -109,18 +109,14 @@ class TestHiringAIAssistant:
         config = AIConfig()
         config.provider = "gemini"
         config.api_key = ""
-        
+
         assistant = HiringAIAssistant(config=config)
-        
+
         assert assistant.enabled is False
 
-    @patch('src.ai.gemini_client.genai')
+    @patch("src.ai.gemini_client.genai")
     def test_summarize_candidate_success_gemini(
-        self, 
-        mock_genai, 
-        mock_ai_config_gemini, 
-        test_candidate, 
-        mock_genai_response
+        self, mock_genai, mock_ai_config_gemini, test_candidate, mock_genai_response
     ):
         """Test successful candidate summarization with Gemini."""
         # Setup mock
@@ -129,62 +125,59 @@ class TestHiringAIAssistant:
         mock_genai.GenerativeModel.return_value = mock_model
         mock_genai.configure = MagicMock()
         mock_genai.types.GenerationConfig = MagicMock()
-        
+
         assistant = HiringAIAssistant(config=mock_ai_config_gemini)
         summary = assistant.summarize_candidate(test_candidate)
-        
+
         assert summary is not None
         assert isinstance(summary, str)
         assert len(summary) > 0
         mock_model.generate_content.assert_called_once()
 
-    @patch('src.ai.groq_client.Groq')
+    @patch("src.ai.groq_client.Groq")
     def test_summarize_candidate_success_groq(
-        self,
-        mock_groq_class,
-        mock_ai_config_groq,
-        test_candidate
+        self, mock_groq_class, mock_ai_config_groq, test_candidate
     ):
         """Test successful candidate summarization with Groq."""
         # Mock Groq client and response
         mock_groq_instance = MagicMock()
         mock_groq_instance.models.list.return_value = []
-        
+
         # Mock chat completion response
         mock_completion = MagicMock()
         mock_completion.choices = [MagicMock()]
         mock_completion.choices[0].message.content = "This is a Groq response."
         mock_groq_instance.chat.completions.create.return_value = mock_completion
-        
+
         mock_groq_class.return_value = mock_groq_instance
-        
+
         assistant = HiringAIAssistant(config=mock_ai_config_groq)
         summary = assistant.summarize_candidate(test_candidate)
-        
+
         assert summary is not None
         assert isinstance(summary, str)
         assert len(summary) > 0
         mock_groq_instance.chat.completions.create.assert_called_once()
-        
+
     def test_summarize_candidate_when_disabled(self, test_candidate):
         """Test that summarization returns None when AI is disabled."""
         config = AIConfig()
         config.provider = "gemini"
         config.api_key = ""
-        
+
         assistant = HiringAIAssistant(config=config)
         summary = assistant.summarize_candidate(test_candidate)
-        
+
         assert summary is None
 
-    @patch('src.ai.gemini_client.genai')
+    @patch("src.ai.gemini_client.genai")
     def test_explain_match_success(
-        self, 
-        mock_genai, 
-        mock_ai_config_gemini, 
-        test_candidate, 
+        self,
+        mock_genai,
+        mock_ai_config_gemini,
+        test_candidate,
         test_job,
-        mock_genai_response
+        mock_genai_response,
     ):
         """Test successful match explanation generation."""
         # Setup mock
@@ -193,18 +186,18 @@ class TestHiringAIAssistant:
         mock_genai.GenerativeModel.return_value = mock_model
         mock_genai.configure = MagicMock()
         mock_genai.types.GenerationConfig = MagicMock()
-        
+
         assistant = HiringAIAssistant(config=mock_ai_config_gemini)
-        
+
         explanation = assistant.explain_match(
             candidate=test_candidate,
             job=test_job,
             score=0.75,
             breakdown={"required_skills": 0.8, "experience": 0.7},
             missing_hard=[],
-            missing_soft=["tensorflow"]
+            missing_soft=["tensorflow"],
         )
-        
+
         assert explanation is not None
         assert isinstance(explanation, str)
         mock_model.generate_content.assert_called_once()
@@ -214,21 +207,21 @@ class TestHiringAIAssistant:
         config = AIConfig()
         config.provider = "gemini"
         config.api_key = ""
-        
+
         assistant = HiringAIAssistant(config=config)
-        
+
         explanation = assistant.explain_match(
             candidate=test_candidate,
             job=test_job,
             score=0.75,
             breakdown={"required_skills": 0.8},
             missing_hard=[],
-            missing_soft=[]
+            missing_soft=[],
         )
-        
+
         assert explanation is None
 
-    @patch('src.ai.gemini_client.genai')
+    @patch("src.ai.gemini_client.genai")
     def test_suggest_refinements_success(
         self, mock_genai, mock_ai_config_gemini, mock_genai_response
     ):
@@ -239,39 +232,39 @@ class TestHiringAIAssistant:
         mock_genai.GenerativeModel.return_value = mock_model
         mock_genai.configure = MagicMock()
         mock_genai.types.GenerationConfig = MagicMock()
-        
+
         assistant = HiringAIAssistant(config=mock_ai_config_gemini)
-        
+
         feedback = [
             {
                 "candidate_name": "Test Candidate",
                 "job_title": "ML Engineer",
                 "score": 0.75,
                 "decision": "interviewed",
-                "notes": "Strong systems thinker"
+                "notes": "Strong systems thinker",
             }
         ]
-        
+
         suggestions = assistant.suggest_refinements(feedback)
-        
+
         assert suggestions is not None
         assert isinstance(suggestions, str)
         mock_model.generate_content.assert_called_once()
 
-    @patch('src.ai.gemini_client.genai')
+    @patch("src.ai.gemini_client.genai")
     def test_suggest_refinements_empty_feedback(
         self, mock_genai, mock_ai_config_gemini
     ):
         """Test that empty feedback returns appropriate message."""
         mock_genai.configure = MagicMock()
         mock_genai.GenerativeModel = MagicMock(return_value=MagicMock())
-        
+
         assistant = HiringAIAssistant(config=mock_ai_config_gemini)
         suggestions = assistant.suggest_refinements([])
-        
+
         assert suggestions == "No feedback provided for analysis."
 
-    @patch('src.ai.gemini_client.genai')
+    @patch("src.ai.gemini_client.genai")
     def test_api_error_graceful_degradation(
         self, mock_genai, mock_ai_config_gemini, test_candidate
     ):
@@ -282,38 +275,38 @@ class TestHiringAIAssistant:
         mock_genai.GenerativeModel.return_value = mock_model
         mock_genai.configure = MagicMock()
         mock_genai.types.GenerationConfig = MagicMock()
-        
+
         assistant = HiringAIAssistant(config=mock_ai_config_gemini)
         summary = assistant.summarize_candidate(test_candidate)
-        
+
         # Should return None instead of crashing
         assert summary is None
 
-    @patch('src.ai.gemini_client.genai')
-    @patch('src.ai.ai_service.time.sleep')  # Mock sleep to speed up tests
+    @patch("src.ai.gemini_client.genai")
+    @patch("src.ai.ai_service.time.sleep")  # Mock sleep to speed up tests
     def test_retry_logic_on_failure(
         self, mock_sleep, mock_genai, mock_ai_config_gemini, test_candidate
     ):
         """Test that retry logic attempts multiple times before giving up."""
         # Setup mock to fail twice then succeed
         mock_model = MagicMock()
-        
+
         # Create a response object with .text attribute
         mock_response = MagicMock()
         mock_response.text = "Success after retries"
-        
+
         mock_model.generate_content.side_effect = [
             Exception("Fail 1"),
             Exception("Fail 2"),
-            mock_response  # Return response object, not string
+            mock_response,  # Return response object, not string
         ]
         mock_genai.GenerativeModel.return_value = mock_model
         mock_genai.configure = MagicMock()
         mock_genai.types.GenerationConfig = MagicMock()
-        
+
         assistant = HiringAIAssistant(config=mock_ai_config_gemini)
         summary = assistant.summarize_candidate(test_candidate)
-        
+
         assert summary == "Success after retries"
         assert mock_model.generate_content.call_count == 3
         assert mock_sleep.call_count == 2  # Should sleep between retries
@@ -327,7 +320,7 @@ class TestAIConfig:
         config = AIConfig()
         config.provider = "gemini"
         config.api_key = "valid-test-key"
-        
+
         assert config.is_enabled() is True
 
     def test_is_enabled_gemini_with_empty_key(self):
@@ -335,7 +328,7 @@ class TestAIConfig:
         config = AIConfig()
         config.provider = "gemini"
         config.api_key = ""
-        
+
         assert config.is_enabled() is False
 
     def test_is_enabled_gemini_with_placeholder_key(self):
@@ -343,7 +336,7 @@ class TestAIConfig:
         config = AIConfig()
         config.provider = "gemini"
         config.api_key = "your-api-key-here"
-        
+
         assert config.is_enabled() is False
 
     def test_is_enabled_ollama(self):
@@ -351,7 +344,7 @@ class TestAIConfig:
         config = AIConfig()
         config.provider = "groq"
         config.groq_api_key = "test-key"
-        
+
         assert config.is_enabled() is True
 
     def test_is_enabled_groq_with_empty_key(self):
@@ -359,13 +352,13 @@ class TestAIConfig:
         config = AIConfig()
         config.provider = "groq"
         config.groq_api_key = ""
-        
+
         assert config.is_enabled() is False
 
     def test_default_provider(self):
         """Test that default provider is gemini."""
         config = AIConfig()
-        
+
         assert config.provider == "gemini"
 
     def test_model_property_gemini(self):
@@ -373,7 +366,7 @@ class TestAIConfig:
         config = AIConfig()
         config.provider = "gemini"
         config.gemini_model = "gemini-flash-latest"
-        
+
         assert config.model == "gemini-flash-latest"
 
     def test_model_property_groq(self):
@@ -381,14 +374,13 @@ class TestAIConfig:
         config = AIConfig()
         config.provider = "groq"
         config.groq_model = "llama-3.2-3b-preview"
-        
+
         assert config.model == "llama-3.2-3b-preview"
 
     def test_default_values(self):
         """Test that config has sensible default values."""
         config = AIConfig()
-        
+
         assert config.max_tokens == 2000
         assert config.temperature == 0.7
         assert config.timeout == 10
-

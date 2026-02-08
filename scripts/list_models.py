@@ -1,9 +1,8 @@
-"""
-List available Gemini models to find the correct model name.
-"""
+"""#!/usr/bin/env python3List available Gemini models to find the correct model name."""
+
+import os
 
 import google.generativeai as genai
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,7 +13,7 @@ print("Available Gemini models:\n")
 
 try:
     for model in genai.list_models():
-        if 'generateContent' in model.supported_generation_methods:
+        if "generateContent" in model.supported_generation_methods:
             print(f"✓ {model.name}")
             print(f"  Display name: {model.display_name}")
             print(f"  Description: {model.description[:100]}...")
